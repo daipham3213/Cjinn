@@ -58,7 +58,6 @@ export const httpLink = createUploadLink({
 const wsLink = () => {
   const wsClient = new SubscriptionClient(Config.GRAPHQL_WS, {
     reconnect: true,
-    lazy: true,
     connectionParams: () => ({
       authorization: `Bearer ${AppStorage.loadItem<string>(R_TOKEN)}`,
       deviceToken: `Bearer ${

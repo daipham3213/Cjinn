@@ -72,6 +72,44 @@ const MainContextProvider: React.FC<Props> = ({ children }) => {
 
   const { received, delivered } = useInComingMessage()
 
+  const fireStoreCleanUp = React.useCallback(async () => {
+    if (meeting) {
+      const cRef = firebase.firestore().collection('meeting').doc(meeting.id)
+      if (cRef) {
+        const calleeCandidate = await cRef.collection('callee').get()
+        calleeCandidate.forEach(candidate => {
+          candidate.ref.delete()
+        })
+        const callerCandidate = await cRef.collection('caller').get()
+        callerCandidate.forEach(candidate => {
+          candidate.ref.delete()
+        })
+        await cRef.delete()
+      }
+    }
+  }, [meeting])
+
+  const onHangUp = React.useCallback(async () => {
+    peerConnection?.current?.close()
+    localStream?.getTracks().forEach(track => track.stop())
+    localStream?.release()
+    setLocalStream(null)
+    setRemoteStream(null)
+    RNCallKeep.endAllCalls()
+    fireStoreCleanUp()
+    dispatch(meetingSliceActions.reset())
+    navigateAndSimpleReset('Main')
+  }, [dispatch, localStream, fireStoreCleanUp])
+
+  const onSwitchCamera = () => {
+    if (localStream) {
+      localStream.getVideoTracks().forEach(track => {
+        // @ts-ignore
+        track._switchCamera()
+      })
+    }
+  }
+
   React.useEffect(() => {
     const cRef = meeting
       ? firebase.firestore().collection('meeting').doc(meeting.id)
@@ -108,7 +146,7 @@ const MainContextProvider: React.FC<Props> = ({ children }) => {
         subscribeOnDelete()
       }
     }
-  }, [meeting])
+  }, [meeting, onHangUp])
 
   const setupWebRtc = async () => {
     peerConnection.current = new RTCPeerConnection(configuration)
@@ -234,44 +272,6 @@ const MainContextProvider: React.FC<Props> = ({ children }) => {
       setOffCamera(!isOffCamera)
       localStream.getVideoTracks().forEach(track => {
         track.enabled = !track.enabled
-      })
-    }
-  }
-
-  const onHangUp = async () => {
-    peerConnection?.current?.close()
-    localStream?.getTracks().forEach(track => track.stop())
-    localStream?.release()
-    setLocalStream(null)
-    setRemoteStream(null)
-    RNCallKeep.endAllCalls()
-    fireStoreCleanUp()
-    dispatch(meetingSliceActions.reset())
-    navigateAndSimpleReset('Main')
-  }
-
-  const fireStoreCleanUp = async () => {
-    if (meeting) {
-      const cRef = firebase.firestore().collection('meeting').doc(meeting.id)
-      if (cRef) {
-        const calleeCandidate = await cRef.collection('callee').get()
-        calleeCandidate.forEach(candidate => {
-          candidate.ref.delete()
-        })
-        const callerCandidate = await cRef.collection('caller').get()
-        callerCandidate.forEach(candidate => {
-          candidate.ref.delete()
-        })
-        await cRef.delete()
-      }
-    }
-  }
-
-  const onSwitchCamera = () => {
-    if (localStream) {
-      localStream.getVideoTracks().forEach(track => {
-        // @ts-ignore
-        track._switchCamera()
       })
     }
   }

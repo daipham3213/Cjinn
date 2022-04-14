@@ -37,7 +37,7 @@ const useInComingMessage = () => {
       10,
     )
   }
-  const checkNotify = (message: any): boolean => {
+  const checkNotify = React.useCallback((message: any): boolean => {
     setLoading(false)
     const route = getCurrentRoute()
     const isNoRoute = route === undefined || route === null
@@ -48,27 +48,33 @@ const useInComingMessage = () => {
     const notBlacklist = !BLACK_LIST.includes(name)
     const notCurrentThread = params?.threadId !== message.threadId
     return notBlacklist && notCurrentThread
-  }
-  const handleNotify = async (message: any) => {
-    const { firstName, lastName, avatar } = message.sender
-    const isNotify = checkNotify(message)
-    if (isNotify) {
-      await notifee.displayNotification({
-        data: { messageId: message.id, threadId: message.threadId },
-        body: message.contents,
-        title: `New message from ${firstName} ${lastName}`,
-        android: {
-          autoCancel: true,
-          channelId: Config.CHANNEL_NOTIFY,
-          largeIcon: avatar ? avatar : require('@/Assets/Images/app-logo.png'),
-          pressAction: {
-            id: 'launching',
-            launchActivity: 'default',
+  }, [])
+
+  const handleNotify = React.useCallback(
+    async (message: any) => {
+      const { firstName, lastName, avatar } = message.sender
+      const isNotify = checkNotify(message)
+      if (isNotify) {
+        await notifee.displayNotification({
+          data: { messageId: message.id, threadId: message.threadId },
+          body: message.contents,
+          title: `New message from ${firstName} ${lastName}`,
+          android: {
+            autoCancel: true,
+            channelId: Config.CHANNEL_NOTIFY,
+            largeIcon: avatar
+              ? avatar
+              : require('@/Assets/Images/app-logo.png'),
+            pressAction: {
+              id: 'launching',
+              launchActivity: 'default',
+            },
           },
-        },
-      })
-    }
-  }
+        })
+      }
+    },
+    [checkNotify],
+  )
 
   React.useEffect(() => {
     async function flowDriver() {
@@ -108,6 +114,7 @@ const useInComingMessage = () => {
             break
           case Event_Type.MessageDelivered:
             const deliveredItems = port?.map(item => mapPortDeliveredType(item))
+            console.log(deliveredItems)
             setDelivered([...new Set(deliveredItems)])
             deliveredItems?.forEach((item: DeliveredItem) => {
               store.messages.editMessage(item.id, item.threadId, {
@@ -125,7 +132,7 @@ const useInComingMessage = () => {
     }
 
     flowDriver().catch(e => console.log(e))
-  }, [data, dispatch, store])
+  }, [data, dispatch, handleNotify, store])
 
   return {
     received,

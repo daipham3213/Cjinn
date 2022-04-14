@@ -1,4 +1,4 @@
-const host = '192.168.1.9:8082'
+const host = '192.168.1.19'
 export const Config = {
   API_URL: 'https://jsonplaceholder.typicode.com/',
   GRAPHQL_URL: `http://${host}/graphql/`,

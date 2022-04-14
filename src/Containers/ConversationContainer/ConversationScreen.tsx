@@ -96,7 +96,7 @@ const ConversationScreen = ({
               media: media.flatMap(value => ({
                 uri: value.uri,
                 name: value.name,
-                isVideo: (value.type?.indexOf('image') ?? 1) < 0,
+                isVideo: value.type?.includes('video') ?? false,
               })),
             },
           }

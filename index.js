@@ -29,3 +29,5 @@ AppRegistry.registerHeadlessTask(
       return Promise.resolve()
     },
 )
+
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'

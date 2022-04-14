@@ -14,6 +14,7 @@ import ChatMessage from '@/Components/ChatMessage'
 import { ThreadType } from '@/Services/types'
 import { Swipeable } from 'react-native-gesture-handler'
 import { MainContext } from '@/Containers/MainContext'
+
 interface Props {
   thread: ThreadType
   onMessageSwipe?: (id: string) => void
@@ -58,22 +59,23 @@ export default ({ thread }: Props) => {
     }
   }, [messages, thread.pk])
 
-  React.useEffect(() => {
-    async function loadMsg() {
-      if (store) {
-        const value = await store.messages.getThreadMessages(
-          thread.pk,
-          20,
-          cursor,
-        )
-        setMessages(prevState => {
-          const arr = [...new Set(prevState.concat(value))]
-          return [...new Map(arr.map(item => [item.id, item])).values()]
-        })
-      }
+  const loadMessages = React.useCallback(async () => {
+    if (store) {
+      const value = await store.messages.getThreadMessages(
+        thread.pk,
+        20,
+        cursor,
+      )
+      setMessages(prevState => {
+        const arr = [...new Set(prevState.concat(value))]
+        return [...new Map(arr.map(item => [item.id, item])).values()]
+      })
     }
-    loadMsg()
-  }, [cursor, thread, delivered, store])
+  }, [cursor, store, thread])
+
+  React.useEffect(() => {
+    loadMessages();
+  }, [loadMessages])
 
   React.useEffect(() => {
     if (received.length > 0) {

@@ -185,6 +185,7 @@ class Notification extends Component<Props, Props> {
         // </editor-fold >
         // <editor-fold desc="Message delivery status">
         case 'completion_signal':
+          console.log('complete', data.messages, data.success);
           const portD: PortDelivered[] = JSON.parse(data.messages)
           let deliveredItems = portD.map(item => mapPortDeliveredType(item))
           const success = data.success
